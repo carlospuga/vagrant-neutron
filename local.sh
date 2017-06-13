@@ -41,9 +41,13 @@ if is_service_enabled nova; then
     nova keypair-add --pub-key=${DEVSTACK_LBAAS_SSH_KEY}.pub ${DEVSTACK_LBAAS_SSH_KEY_NAME}
 
     # Add tcp/22,80 and icmp to default security group
-    nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
-    nova secgroup-add-rule default tcp 80 80 0.0.0.0/0
-    nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+    DEFAULT=$(openstack project list | grep -w demo | awk '{print $2}')
+    neutron security-group-rule-create DEFAULT --protocol tcp --port-range-min 22 --port-range-max 22 --remote-ip-prefix 0.0.0.0/0
+    neutron security-group-rule-create DEFAULT --protocol tcp --port-range-min 80 --port-range-max 80 --remote-ip-prefix 0.0.0.0/0
+    neutron security-group-rule-create DEFAULT --protocol icmp --remote-ip-prefix 0.0.0.0/0
+    #nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
+    #nova secgroup-add-rule default tcp 80 80 0.0.0.0/0
+    #nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 
     # Boot some instances
     NOVA_BOOT_ARGS="--key-name ${DEVSTACK_LBAAS_SSH_KEY_NAME} --image $(openstack image list | awk '/ cirros-0.3.4-x86_64-disk / {print $2}') --flavor 1 --nic net-id=$(neutron net-list | awk '/ private / {print $2}')"
